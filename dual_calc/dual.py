@@ -58,7 +58,7 @@ class Dual:
         return f"Dual(real={self.real}, dual={self.dual})"
 
     # equality magic method
-    def __eq__(self, other: int | float):
+    def __eq__(self, other: "int | float | Dual"):
         """Determines if the Dual is equal to an different Dual, int, or float
 
         This method is implimented when the binary operator (=) is used after a Dual
@@ -79,7 +79,7 @@ class Dual:
         return (abs(self.real - other.real) < 1e-12 and abs(self.dual - other.dual) < 1e-12) 
 
     # addition magic method
-    def __add__(self, other: int | float):
+    def __add__(self, other: "int | float | Dual"):
         """Performs addition on Duals
 
         This method is implimented with the binary operator (+) is used after a Dual
@@ -99,8 +99,8 @@ class Dual:
         return Dual(self.real+other.real, self.dual+other.dual) 
 
     # reverse addition magic method
-    def __radd__(self, other: int | float):
-        """Performs addition on Duals
+    def __radd__(self, other: "int | float | Dual"):
+        """Performs reverse addition on Duals
 
         This method is implimented when the binary operator (+) is used after a numeric value and before a Dual
 
@@ -119,7 +119,7 @@ class Dual:
         return Dual(self.real+other.real, self.dual+other.dual) 
 
     # subtraction magic method
-    def __sub__(self,other: int | float):
+    def __sub__(self,other: "int | float | Dual"):
         """Performs subtraction of Duals
 
         This method is implimented when the binary operator (-) is used after a Dual
@@ -139,8 +139,8 @@ class Dual:
         return Dual(self.real-other.real, self.dual-other.dual) 
 
     # reverse subtraction magic method
-    def __rsub__(self,other: int | float):
-        """Performs subtraction of Duals
+    def __rsub__(self,other: "int | float | Dual"):
+        """Performs reverse subtraction of Duals
 
         This method is implimented when the binary operator (-) is used after a numeric value and before a Dual
         
@@ -171,7 +171,7 @@ class Dual:
         return Dual(-self.real, -self.dual) 
 
     # multiplication magic method
-    def __mul__(self, other: int | float):
+    def __mul__(self, other: "int | float | Dual"):
         """Performs multiplication on Duals
 
         This method is implimented when the binary operator (*) is used after a Dual
@@ -191,8 +191,8 @@ class Dual:
         return Dual(self.real*other.real, self.dual*other.real+self.real*other.dual) 
 
     # reverse multiplication magic method
-    def __rmul__(self, other: int | float):
-        """Performs multiplication on Duals
+    def __rmul__(self, other: "int | float | Dual"):
+        """Performs reverse multiplication on Duals
         
         This method is implimented when the binary operator (*) is used after a numeric value and before a Dual
 
@@ -211,7 +211,7 @@ class Dual:
         return Dual(self.real*other.real, self.dual*other.real+self.real*other.dual) 
 
     # division magic method
-    def __truediv__(self, other: int | float):
+    def __truediv__(self, other: "int | float | Dual"):
         """Performs division on Duals
 
         This method is implimented when the binary operation (/) is used after a Dual
@@ -234,8 +234,8 @@ class Dual:
         return Dual(self.real/other.real, (self.dual*other.real-self.real*other.dual)/(other.real**2)) 
 
     # reverse division magic method
-    def __rtruediv__(self, other: int | float):
-        """Performs division on Duals
+    def __rtruediv__(self, other: "int | float | Dual"):
+        """Performs reverse division on Duals
 
         This method is implimented when the binary operator (/) is used after a numeric value and before a Dual
 
@@ -257,7 +257,7 @@ class Dual:
         return Dual(other.real/self.real, (other.dual*self.real-other.real*self.dual)/(self.real**2)) 
 
     # power magic method
-    def __pow__(self, other: int | float):
+    def __pow__(self, other: "int | float | Dual"):
         """Performs exponentiation on Duals
 
         This method is implimented with the binary operator (**) is used after a Dual
@@ -278,7 +278,7 @@ class Dual:
         return Dual(self.real**other, other*self.real**(other-1)*self.dual) 
 
     # reverse power magic method
-    def __rpow__(self, other: int | float):
+    def __rpow__(self, other: "int | float | Dual"):
         """Performs exponentiation of Duals
         
         This method is implimented when the binary operator (**) is used after a numeric value and before a Dual
@@ -291,9 +291,11 @@ class Dual:
 
 # only runs tests if file is ran directly
 if __name__ == "__main__": 
-
+    passed=0
     # define passed test
     def pass_test():
+        global passed
+        passed+=1
         print("\033[32mPass\033[0m")
         print()
 
@@ -303,7 +305,7 @@ if __name__ == "__main__":
         print()
 
     print("Running Tests on Dual class")
-
+    
     # test init magic method
     print("Dual Test")
     try:
@@ -491,3 +493,7 @@ if __name__ == "__main__":
     # fails if any unexpected errors are thrown
     except Exception:
         fail_test()
+
+    # opens help only if all 9 tests pass
+    if passed==9:
+        help(Dual)
