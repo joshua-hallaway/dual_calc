@@ -33,15 +33,7 @@ class Dual:
         return Dual(a+c,b+d)
 
     def __radd__(self, other: "int | float | Dual"):
-        try: 
-             other=Dual.to_dual(other)
-        except TypeError:
-            raise TypeError("Only numeric values can be added to Dual")
-        a=self.real
-        b=self.dual
-        c=other.real
-        d=other.dual
-        return Dual(a+c,b+d)
+        return self+other
 
     def __sub__(self,other: "int | float | Dual"):
         try: 
@@ -80,15 +72,7 @@ class Dual:
         return Dual(a*c,a*d+b*c)
 
     def __rmul__(self, other: "int | float | Dual"):
-        try: 
-             other=Dual.to_dual(other)
-        except TypeError:
-            raise TypeError("Only numeric values can be multiplied with Dual")
-        a=self.real
-        b=self.dual
-        c=other.real
-        d=other.dual
-        return Dual(c*a,c*b+d*a)
+        return self*other
 
     def __truediv__(self, other: "int | float | Dual"):
         try: 
@@ -125,6 +109,8 @@ class Dual:
         b=self.dual
         c=other.real
         d=other.dual
+        if a<=0:
+            raise ValueError("Power requires a positive base")
         return Dual(a**c,a**c*(d*np.log(a)+(b*c)/a))
 
     def __rpow__(self, other):
@@ -136,4 +122,24 @@ class Dual:
         b=self.dual
         c=other.real
         d=other.dual
+        if c<=0:
+            raise ValueError("Power requires a positive base")
         return Dual(c**a,c**a*(b*np.log(c)+(d*a)/c))
+
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        if method!="__call__":
+            return NotImplemented
+        if kwargs.get("out") is not None:
+            return NotImplemented
+        if not any(isinstance(x, Dual) for x in inputs):
+            return NotImplemented
+        x=next(i for i in inputs if isinstance(i,Dual))
+        a=x.real
+        b=x.dual
+        if ufunc is np.sin:
+            return Dual(np.sin(a),b*np.cos(a))
+        if ufunc is np.cos:
+            return Dual(np.cos(a),-b*np.sin(a))
+        if ufunc is np.tan:
+            return Dual(np.tan(a),b/np.cos(a)**2)
+        return NotImplemented
