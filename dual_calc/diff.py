@@ -19,8 +19,21 @@ class Poly:
             deg=np.array(deg, dtype=object)
         if not isinstance(coef,np.ndarray) or not isinstance(deg,np.ndarray):
             raise TypeError("coef and deg must be numeric or lists and arrays of numerics")
+        if isinstance(coef, np.ndarray):
+            coef=coef.astype(object)
+        if isinstance(deg, np.ndarray):
+                    deg=deg.astype(object)
         self._coef=coef
         self._deg=deg
 
     def __call__(self,x: int | float | d.Dual):
-        return np.sum(self._coef*(x**self._deg))
+        return sum(self._coef[i]*(x**self._deg[i]) for i in range(len(self._coef)))
+
+    def der(self,x: int | float):
+        u=d.Dual(x,1)
+        u=self(u)
+        return u.dual  # type: ignore
+
+f=Poly([1,1,1],[1,2,3])
+print(f(1))
+print(f.der(1))
