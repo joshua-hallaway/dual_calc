@@ -32,10 +32,10 @@ class Dual:
         d=other.dual
         return Dual(a+c,b+d)
 
-    def __radd__(self, other: "int | float | Dual"):
+    def __radd__(self, other):
         return self+other
 
-    def __sub__(self,other: "int | float | Dual"):
+    def __sub__(self,other):
         try: 
              other=Dual.to_dual(other)
         except TypeError:
@@ -46,7 +46,7 @@ class Dual:
         d=other.dual
         return Dual(a-c,b-d) 
 
-    def __rsub__(self,other: "int | float | Dual"):
+    def __rsub__(self,other):
         try: 
              other=Dual.to_dual(other)
         except TypeError:
@@ -60,7 +60,7 @@ class Dual:
     def __neg__(self):
         return Dual(-self.real, -self.dual) 
 
-    def __mul__(self, other: "int | float | Dual"):
+    def __mul__(self, other):
         try: 
              other=Dual.to_dual(other)
         except TypeError:
@@ -71,10 +71,10 @@ class Dual:
         d=other.dual
         return Dual(a*c,a*d+b*c)
 
-    def __rmul__(self, other: "int | float | Dual"):
+    def __rmul__(self, other):
         return self*other
 
-    def __truediv__(self, other: "int | float | Dual"):
+    def __truediv__(self, other):
         try: 
              other=Dual.to_dual(other)
         except TypeError:
