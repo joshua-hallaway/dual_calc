@@ -1,19 +1,18 @@
 import numpy as np
 import dual as d
 class Node:
+    """Parent class for nodes in an expression tree
+    """
     def __init__(self, value):
         self.children=[]
         self.value=value
 
-    def preorder(self):
-        print(self, end=' ')
-        for i in self.children:
-            i.preorder()
-
     def __repr__(self):
-        return self.value
+        return str(self.value)
 
 class Variable(Node):
+    """Represents a variable like x or y
+    """
     def __init__(self, name):
         if not isinstance(name, str):
             raise TypeError("name must be str")
@@ -25,6 +24,8 @@ class Variable(Node):
 
 
 class Operator(Node):
+    """Represents an operation and it operand children
+    """
     def __init__(self, name, children):
         if not isinstance(name, str):
             raise TypeError("name must be str")
@@ -106,9 +107,13 @@ class Operator(Node):
                     else:
                         childstr[1]=f"{self.children[1]}"
                     return f"{childstr[0]}{self.value}{childstr[1]}"
+            case "sin"|"cos"|"tan":
+                return f"{self.value}({self.children[0]})"
 
 
 class Constant(Node):
+    """Represents a numerical constant
+    """
     def __init__(self, value):
         if not isinstance(value, (int,float, np.number)):
             raise TypeError("value must be numeric")
@@ -117,3 +122,4 @@ class Constant(Node):
 
     def __repr__(self):
         return str(self.value)
+
