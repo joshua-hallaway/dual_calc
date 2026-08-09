@@ -279,12 +279,12 @@ class Dual:
         return Dual(c**a,c**a*(b*np.log(c)+(d*a)/c))
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-        """Performs NumPy trigonometric functions on Duals
+        """Performs NumPy functions on Duals
 
-        This method is implemented when the NumPy ufuncs (np.sin | np.cos |np.tan) are used on a Dual
+        This method is implemented when the NumPy ufuncs (np.sin | np.cos |np.tan | np.log | np.exp | np.sqrt | np.asin | np.acos | np.atan) are used on a Dual
 
         Returns:
-            Dual: the result of the trigonometric fuction
+            Dual: the result of the fuction
         """
         if method!="__call__":
             return NotImplemented
@@ -301,4 +301,15 @@ class Dual:
             return Dual(np.cos(a),-b*np.sin(a))
         if ufunc is np.tan:
             return Dual(np.tan(a),b/np.cos(a)**2)
-        return NotImplemented
+        if ufunc is np.log:
+            return Dual(np.log(a),b/a)
+        if ufunc is np.exp:
+            return Dual(np.exp(a),b*np.exp(a))
+        if ufunc is np.sqrt:
+            return Dual(np.sqrt(a),b/(2*np.sqrt(a)))
+        if ufunc is np.asin:
+            return Dual(np.asin(a),b/(np.sqrt(1-a**2)))
+        if ufunc is np.acos:
+            return Dual(np.acos(a),-b/(np.sqrt(1-a**2)))
+        if ufunc is np.atan:
+            return Dual(np.atan(a),b/(1+a**2))
