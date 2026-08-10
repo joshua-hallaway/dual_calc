@@ -184,10 +184,12 @@ class Constant(Node):
 def deriv(function:Operator,point:int|float):
     value=function.eval({"x":d.Dual(point,1)})
     assert value is not None
-    return value.dual
+    if isinstance(value,d.Dual):
+        return value.dual
+    return 0
 
 def tokenize(equation:str):
-    pattern=r'\d+(?:\.\d*)?|\.\d+|[a-zA-Z_]\w*|[+\-*/^()]'
+    pattern=r'\d+(?:\.\d*)?|\.\d+|[a-zA-Z_]\w*|\*\*|[+\-*/^()]'
     return re.findall(pattern,equation)
 
 class Parser:
