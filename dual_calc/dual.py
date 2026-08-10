@@ -1,4 +1,5 @@
 import numpy as np
+import equation as eq
 class Dual:
     """A number with both a real and dual component of the form a+bϵ.
 
@@ -8,32 +9,32 @@ class Dual:
         real (int | float): the real portion of the dual number
         dual (int | float): the dual portion of the dual number
     """
-    def __init__(self, real: int | float, dual: int | float):
+    def __init__(self, real: int | float | eq.Node, dual: int | float | eq.Node):
         """Initializes a dual number with a real and dual part
 
         Initializes a dual number with a real and dual component
 
         Args:
-            real (int | float): the real portion of the dual number
-            dual (int | float): the dual portion of the dual number
+            real (int | float | Node): the real portion of the dual number
+            dual (int | float | Node): the dual portion of the dual number
         """
-        if not isinstance(real, (int,float)) or not isinstance(dual,(int,float)):
+        if not isinstance(real, (int,float,eq.Node)) or not isinstance(dual,(int,float,eq.Node)):
             raise TypeError("All arguments must be numeric")
         self.real=real
         self.dual=dual
 
     @staticmethod
-    def to_dual(other: "int | float | Dual"):
+    def to_dual(other: "int | float | Dual | eq.Node"):
         """Converts int and float values to Dual objects
 
         Args:
-            other (int | float | Dual): the object to be converted to a Dual
+            other (int | float | Dual | Node): the object to be converted to a Dual
         
         Returns:
             Dual: the Dual version of the int, float, or Dual value
         """
-        if not isinstance(other,(int,float,Dual)):
-            raise TypeError("Only numeric values can be converted to Duals")
+        if not isinstance(other,(int,float,Dual,eq.Node)):
+            raise TypeError("Value cannot be converted to Dual")
         if isinstance(other, Dual): 
             return other
         else: 
@@ -49,7 +50,7 @@ class Dual:
         """
         return f"Dual(real={self.real}, dual={self.dual})"
 
-    def __eq__(self, other: "int  | float | Dual"):
+    def __eq__(self, other: "int  | float | Dual | eq.Node"):
         """Determines if the Dual is equal to a different Dual, int, or float
 
         This method is implemented when the binary operator (==) is used after a Dual
@@ -64,9 +65,9 @@ class Dual:
             other = Dual.to_dual(other)
         except TypeError:
             return False
-        return (abs(self.real - other.real) < 1e-12 and abs(self.dual - other.dual) < 1e-12) 
+        return self.real == other.real and self.dual == other.dual 
 
-    def __add__(self, other: "int | float | Dual"):
+    def __add__(self, other: "int | float | Dual | eq.Node"):
         """Performs addition on Duals
 
         This method is implemented with the binary operator (+) is used after a Dual
@@ -251,7 +252,7 @@ class Dual:
         b=self.dual
         c=other.real
         d=other.dual
-        if a<=0:
+        if isinstance(a, (int,float)) and a<=0:
             raise ValueError("Power requires a positive base")
         return Dual(a**c,a**c*(d*np.log(a)+(b*c)/a))
 
@@ -274,7 +275,7 @@ class Dual:
         b=self.dual
         c=other.real
         d=other.dual
-        if c<=0:
+        if isinstance(c, (int,float)) and c<=0:
             raise ValueError("Power requires a positive base")
         return Dual(c**a,c**a*(b*np.log(c)+(d*a)/c))
 
@@ -313,3 +314,4 @@ class Dual:
             return Dual(np.acos(a),-b/(np.sqrt(1-a**2)))
         if ufunc is np.atan:
             return Dual(np.atan(a),b/(1+a**2))
+        return NotImplemented

@@ -1,11 +1,13 @@
 import dual as d
 import equation as eq
+import numpy as np
 
 while True:
     f=input("f(x) = ")
-    if f in ("quit",""):
+    if f == "":
         break
-    point=float(input("at x = "))
-    f=eq.Parser(eq.tokenize(f)).parse()
-    print(f'f({point})={f.eval({"x":point})}')
-    print(f"f'({point})={eq.deriv(f,point)}")
+    point=input("at x=")
+    if point == "x":
+        print(eq.deriv(eq.Parser(eq.tokenize(f)).parse(),eq.Variable("x")))
+    else:
+        print(eq.deriv(eq.Parser(eq.tokenize(f)).parse(),float(point)))

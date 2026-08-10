@@ -1,5 +1,4 @@
 import numpy as np
-import dual as d
 from abc import abstractmethod
 import re
 class Node:
@@ -14,8 +13,114 @@ class Node:
 
     @abstractmethod
     def eval(self,values:dict):
-        pass
+        raise NotImplementedError
 
+    def __eq__(self,other):
+        if not isinstance(other,Node):
+            return False
+        if type(self) is not type(other):
+            return False
+        if self.value!=other.value:
+            return False
+        return self.children==other.children
+
+    def __add__(self,other: "int | float | Node"):
+        if isinstance(other, (int, float)):
+            other=Constant(other)
+        elif not isinstance(other,Node):
+            return NotImplemented
+        return Operator("+",[self,other])
+
+    def __radd__(self,other: "int | float | Node"):
+        if isinstance(other, (int, float)):
+            other=Constant(other)
+        elif not isinstance(other,Node):
+            return NotImplemented
+        return Operator("+",[other,self])
+
+    def __sub__(self,other: "int | float | Node"):
+        if isinstance(other, (int, float)):
+            other=Constant(other)
+        elif not isinstance(other,Node):
+            return NotImplemented
+        return Operator("-",[self,other])
+
+    def __rsub__(self,other: "int | float | Node"):
+        if isinstance(other, (int, float)):
+            other=Constant(other)
+        elif not isinstance(other,Node):
+            return NotImplemented
+        return Operator("-",[other,self])
+
+    def __neg__(self):
+        return Operator("-",[self])
+
+    def __mul__(self,other:"int | float | Node"):
+        if isinstance(other, (int, float)):
+            other=Constant(other)
+        elif not isinstance(other,Node):
+            return NotImplemented
+        return Operator("*",[self,other])
+
+    def __rmul__(self,other:"int | float | Node"):
+        if isinstance(other, (int, float)):
+            other=Constant(other)
+        elif not isinstance(other,Node):
+            return NotImplemented
+        return Operator("*",[other,self])
+
+    def __truediv__(self,other:"int | float | Node"):
+        if isinstance(other, (int, float)):
+            other=Constant(other)
+        elif not isinstance(other,Node):
+            return NotImplemented
+        return Operator("/",[self,other])
+
+    def __rtruediv__(self,other:"int | float | Node"):
+        if isinstance(other, (int, float)):
+            other=Constant(other)
+        elif not isinstance(other,Node):
+            return NotImplemented
+        return Operator("/",[other,self])
+
+    def __pow__(self,other:"int | float | Node"):
+        if isinstance(other, (int, float)):
+            other=Constant(other)
+        elif not isinstance(other,Node):
+            return NotImplemented
+        return Operator("**",[self,other])
+
+    def __rpow__(self,other:"int | float | Node"):
+        if isinstance(other, (int, float)):
+            other=Constant(other)
+        elif not isinstance(other,Node):
+            return NotImplemented
+        return Operator("**",[other,self])
+
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        if method!="__call__":
+            return NotImplemented
+        if kwargs.get("out") is not None:
+            return NotImplemented
+        if ufunc is np.sin:
+            return Operator("sin",[self])
+        if ufunc is np.cos:
+            return Operator("cos",[self])
+        if ufunc is np.tan:
+            return Operator("tan",[self])
+        if ufunc is np.log:
+            return Operator("ln",[self])
+        if ufunc is np.exp:
+            return Operator("exp",[self])
+        if ufunc is np.sqrt:
+            return Operator("sqrt",[self])
+        if ufunc is np.asin:
+            return Operator("asin",[self])
+        if ufunc is np.acos:
+            return Operator("acos",[self])
+        if ufunc is np.atan:
+            return Operator("atan",[self])
+        
 class Variable(Node):
     """Represents a variable like x or y
     """
@@ -29,6 +134,7 @@ class Variable(Node):
         return self.value
 
     def eval(self,values:dict):
+        import dual as d
         if not isinstance(values,dict):
             raise TypeError("Values must be a dictionary")
         if self.value not in values:
@@ -140,11 +246,11 @@ class Operator(Node):
             case "*":
                 return children[0]*children[1]
             case "/":
-                if children[1]==0:
+                if isinstance(children[1], (int, float)) and children[1] == 0:
                     raise ZeroDivisionError("cannot divide by zero")
-                return children[0]/children[1]
+                return children[0] / children[1]
             case "**":
-                if children[0]==0 and children[1]<0:
+                if isinstance(children[1], (int, float)) and isinstance(children[0], (int, float)) and children[0]==0 and children[1]<0:
                     raise ZeroDivisionError("cannot divide by zero")
                 return children[0]**children[1]
             case "sin":
@@ -181,9 +287,12 @@ class Constant(Node):
     def eval(self,values:dict):
         return self.value
 
-def deriv(function:Operator,point:int|float):
-    value=function.eval({"x":d.Dual(point,1)})
-    assert value is not None
+def deriv(function:Operator,point:int|float|Node):
+    import dual as d
+    if isinstance(point,Node):
+        value=function.eval({"x":d.Dual(point,Constant(1))})
+    else:
+        value=function.eval({"x":d.Dual(point,1)})
     if isinstance(value,d.Dual):
         return value.dual
     return 0
@@ -286,3 +395,4 @@ class Parser:
             raise ValueError(f"Invalid syntax")
         self.advance()
         return Constant(value)
+
