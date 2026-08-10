@@ -1,6 +1,7 @@
 import numpy as np
 import dual as d
 from abc import abstractmethod
+import re
 class Node:
     """Parent class for nodes in an expression tree
     """
@@ -44,7 +45,7 @@ class Operator(Node):
         if not isinstance(name, str):
             raise TypeError("name must be str")
         match name:
-            case "+"|"*"|"**"|"/"|"^":
+            case "+"|"*"|"**"|"/":
                 if len(children)!=2:
                     raise ValueError(f"{name} needs 2 children")
             case "-":
@@ -60,7 +61,7 @@ class Operator(Node):
                 self.priority=1
             case "*"|"/":
                 self.priority=2
-            case "**"|"^":
+            case "**":
                 self.priority=4
             case "-":
                 if len(children)==1:
@@ -112,7 +113,7 @@ class Operator(Node):
                     else:
                         childstr[1]=f"{self.children[1]}"
                     return f"{childstr[0]}{self.value}{childstr[1]}"
-            case "**"|"^":
+            case "**":
                     childstr=["",""]
                     if self.children[0].priority<=self.priority:
                         childstr[0]=f"({self.children[0]})"
@@ -142,7 +143,7 @@ class Operator(Node):
                 if children[1]==0:
                     raise ZeroDivisionError("cannot divide by zero")
                 return children[0]/children[1]
-            case "**"|"^":
+            case "**":
                 if children[0]==0 and children[1]<0:
                     raise ZeroDivisionError("cannot divide by zero")
                 return children[0]**children[1]
@@ -164,6 +165,7 @@ class Operator(Node):
                 return np.acos(children[0])
             case "atan":
                 return np.atan(children[0])
+            
 class Constant(Node):
     """Represents a numerical constant
     """
@@ -179,3 +181,106 @@ class Constant(Node):
     def eval(self,values:dict):
         return self.value
 
+def deriv(function:Operator,point:int|float):
+    value=function.eval({"x":d.Dual(point,1)})
+    assert value is not None
+    return value.dual
+
+def tokenize(equation:str):
+    pattern=r'\d+(?:\.\d*)?|\.\d+|[a-zA-Z_]\w*|[+\-*/^()]'
+    return re.findall(pattern,equation)
+
+class Parser:
+    def __init__(self, tokens: list[str]):
+        self.tokens=iter(tokens)
+        self.advance()
+
+    def advance(self):
+        try:
+            self.current_token=next(self.tokens)
+        except StopIteration:
+            self.current_token=None
+
+    def parse(self):
+        if self.current_token is None:
+            raise ValueError("Cannot parse empty expression")
+        result=self.parse_add()
+
+        if self.current_token is not None:
+            raise ValueError("Invalid syntax")
+
+        return result
+
+    def parse_add(self):
+        result=self.parse_mult()
+        while self.current_token is not None and self.current_token in ("+","-"):
+            operator=self.current_token
+            self.advance()
+            right=self.parse_mult()
+            result=Operator(operator,[result, right])
+        return result
+
+    def parse_mult(self):
+        result=self.parse_unary()
+        while self.current_token is not None and self.current_token in ("*","/"):
+            operator=self.current_token
+            self.advance()
+            right=self.parse_unary()
+            result=Operator(operator,[result, right])
+        return result
+
+    def parse_unary(self):
+        if self.current_token=="-":
+            self.advance()
+            return Operator("-",[self.parse_unary()])
+        return self.parse_pow()
+
+    def parse_pow(self):
+        result=self.parse_func()
+        if self.current_token is not None and self.current_token in ("**","^"):
+            self.advance()
+            right=self.parse_unary()
+            result=Operator("**",[result, right])
+        return result
+
+    def parse_func(self):
+        if self.current_token in ("sin","cos","tan","exp","sqrt","asin","acos","atan","ln"):
+            function=self.current_token
+            self.advance()
+            if self.current_token!="(":
+                raise ValueError(f"{function} need parentheses")
+            self.advance()
+            child=self.parse_add()
+            if self.current_token!=")":
+                raise ValueError("Missing)")
+            self.advance()
+            return Operator(function,[child])
+        return self.parse_primary()
+
+    def parse_primary(self):
+        token=self.current_token
+        if token is None:
+            raise ValueError("Unexpected end of expression")
+        if token=="(":
+            self.advance()
+            result=self.parse_add()
+            if self.current_token!=")":
+                raise ValueError("Missing )")
+            self.advance()
+            return result
+        if token is not None and len(token)==1 and token.isalpha():
+            self.advance()
+            return Variable(token)
+        if "." in token:
+            try:
+                value=float(token)
+            except (ValueError, TypeError):
+                raise ValueError(f"Invalid syntax: {token}")
+            self.advance()
+            return Constant(value)
+        try:
+            value=int(token)
+        except (ValueError, TypeError):
+            raise ValueError(f"Invalid syntax")
+        self.advance()
+        return Constant(value)
